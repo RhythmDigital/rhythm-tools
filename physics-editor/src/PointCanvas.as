@@ -1,5 +1,6 @@
 package
 {
+	import com.actionsnippet.qbox.objects.PolyObject;
 	import com.greensock.easing.CustomEase;
 	import com.stardotstar.utils.CustomEvent;
 	
@@ -19,6 +20,9 @@ package
 		public var groupsClosed:Array = [];
 		public var selected:PolyPoint;
 		public var snap:Boolean;
+		public var contacts:Array = [];
+		
+		private var selection:Array;
 		
 		public function PointCanvas()
 		{
@@ -141,11 +145,28 @@ package
 				if(selected) selected.deselect();
 				selected = PolyPoint(e.target);
 				selected.selected();
+				
+				selection = [];
+				
+				for(var i:int; i < groups.length; ++i) {
+					for each(var pt:PolyPoint in groups[i]) {
+						if(pt.x == selected.x && pt.y == selected.y) {
+							selection.push(pt);
+						}
+					}
+				}
+				
+				for(var c:int; c < contacts.length; c++) {
+					if(contacts[c].x == selected.x && contacts[c].y == selected.y) {
+						selection.push(contacts[c]);
+					}
+				}
+				
+				
 			} else {
 				if(e.target.group != groups.length-1) {
 					addNextPoint(e.target.x, e.target.y);
 				}
-				
 			}
 		}
 		
@@ -157,7 +178,7 @@ package
 			for(var i:int = 0; i < groups.length; ++i) {
 				
 				graphics.lineStyle(1, groupColours[i]);
-				graphics.beginFill(((groups.length-1) == i) ? 0xff0000 : 0x00ff00, .4);
+				graphics.beginFill(((groups.length-1) == i) ? 0x000000 : 0x00ff00, .1);
 				
 				for(var j:int = 0; j < groups[i].length; j++) {
 					
@@ -183,6 +204,7 @@ package
 		
 		protected function onKeyDown(e:KeyboardEvent):void
 		{
+			
 			switch(e.keyCode) {
 				case Keyboard.ENTER:
 					addGroup();
@@ -196,20 +218,58 @@ package
 					}
 					break;
 				case Keyboard.UP:
-					if(selected) selected.y--;
+					if(selected) shiftSelection(0, -1);
 					break;
 				case Keyboard.DOWN:
-					if(selected) selected.y++;
+					if(selected) shiftSelection(0, 1);
 					break;
 				case Keyboard.LEFT:
-					if(selected) selected.x--;
+					if(selected) shiftSelection(-1, 0);
 					break;
 				case Keyboard.RIGHT:
-					if(selected) selected.x++;
+					if(selected) shiftSelection(1, 0);
 					break;
 				case Keyboard.SHIFT:
 					snap = true;
 					break;
+				case Keyboard.NUMBER_0:
+				case Keyboard.NUMBER_1:
+				case Keyboard.NUMBER_2:
+				case Keyboard.NUMBER_3:
+				case Keyboard.NUMBER_4:
+				case Keyboard.NUMBER_5:
+				case Keyboard.NUMBER_6:
+				case Keyboard.NUMBER_7:
+				case Keyboard.NUMBER_8:
+				case Keyboard.NUMBER_9:
+					if(selected) {
+						//addContactAt(selected, int(String.fromCharCode(e.keyCode)));
+					}
+					break;
+			}
+		}
+		/*
+		private function addContactAt(pt:PolyPoint, id:int):void {
+			
+			var ptID:int = id;
+			var contact:PolyPoint;
+			
+			for each(var c:PolyPoint in contacts) {
+				if(pt.x != c.x || pt.y != c.y) {
+					contact = new PolyPoint(0x000000);
+				}
+			}
+			
+			
+		}
+		*/
+		private function shiftSelection(vx:int = 0, vy:int = 0):void
+		{
+			if(selected && selection) {
+				for each(var pt:PolyPoint in selection) {
+					pt.x += vx;
+					pt.y += vy;
+				}
 			}
 		}
 		

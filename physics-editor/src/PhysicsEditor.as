@@ -8,13 +8,17 @@ package
 	import com.greensock.loading.ImageLoader;
 	import com.stardotstar.utils.CustomEvent;
 	
+	import flash.desktop.ClipboardFormats;
+	import flash.desktop.NativeDragManager;
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import flash.events.NativeDragEvent;
 	import flash.filesystem.File;
 	import flash.net.FileFilter;
 	import flash.ui.Keyboard;
+	import flash.ui.Mouse;
 	
-	[SWF(width="944", height="577", frameRate="30", backgroundColor="0xc2c2c2")] 
+	[SWF(width="944", height="577", frameRate="60", backgroundColor="0x777777")] 
 	public class PhysicsEditor extends Sprite
 	{
 		private var title:String = "BIG BONE EDITOR";
@@ -32,6 +36,8 @@ package
 		private var clearAll:PushButton;
 		private var info:Label;
 		private var mouseInfo:Label;
+		private var dropper:Sprite;
+		private var cursor:Sprite;
 		
 		public function PhysicsEditor()
 		{
@@ -39,6 +45,11 @@ package
 			
 			stage.align = "TL";
 			stage.scaleMode = "noScale";
+			
+			Mouse.hide();
+			makeCursor();
+			addEventListener(Event.ENTER_FRAME, onEnterFrame);
+			onEnterFrame(null);
 			
 			initSettings();
 			
@@ -58,9 +69,67 @@ package
 			stage.addEventListener(Event.RESIZE, onResize);
 			onResize(null);
 			
+			addEventListener(Event.ADDED, onAdded);
 			
 			
 			stage.nativeWindow.title = title;
+		}
+		
+		private function makeCursor():void
+		{
+			cursor = new Sprite();
+			
+			var size:int = 10;
+			
+			with(cursor.graphics) {
+				lineStyle(0.2, 0x00ff00, .7);
+				moveTo(-size, 0);
+				lineTo(size, 0);
+				moveTo(0, -size);
+				lineTo(0, size);
+			}
+			cursor.mouseEnabled = false;
+			cursor.mouseChildren = false;
+			
+			addChild(cursor);
+		}
+		
+		protected function onEnterFrame(e:Event):void
+		{
+			cursor.x = mouseX;
+			cursor.y = mouseY;
+			setChildIndex(cursor, numChildren-1);
+		}
+		
+		protected function onAdded(event:Event):void
+		{
+			trace("added");
+			container.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,onDragIn);
+			container.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,onDrop);
+		}
+		
+		private function onDragIn(e:NativeDragEvent):void
+		{
+			trace("hello");
+			NativeDragManager.acceptDragDrop(container);
+		}
+		
+		private function onDrop(e:NativeDragEvent):void {
+			
+			var dropfiles:Array = e.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+			
+			for each (var file:File in dropfiles){
+				switch (file.extension.toLowerCase()){
+					case "png" :
+					case "jpg" :
+					case "jpeg" :
+					case "gif" :
+						loadImageFromFile(file);
+						break;
+					default:
+						// wrong file type
+				}
+			}
 		}
 		
 		protected function onStatusUpdate(e:CustomEvent):void
@@ -79,6 +148,9 @@ package
 			container.x = stage.stageWidth >> 1;
 			container.y = stage.stageHeight >> 1;
 			
+			container.graphics.beginFill(0xffffff, 0);
+			container.graphics.drawRect(-stage.stageWidth>>1,-stage.stageHeight>>1,stage.stageWidth,stage.stageHeight);
+			container.graphics.endFill();
 		}
 		
 		private function initSettings():void
@@ -116,6 +188,12 @@ package
 		
 		protected function onFileSelect(e:Event):void
 		{
+			loadImageFromFile(imgFile);	
+		}
+		
+		private function loadImageFromFile(f:File):void
+		{
+			imgFile = f;
 			trace(imgFile.url);
 			if(img) {
 				if(img.content.parent) img.content.parent.removeChild(img.content);
@@ -129,6 +207,10 @@ package
 		private function onImageLoaded(e:LoaderEvent):void
 		{
 			container.addChildAt(img.content,0);
+			
+	//		img.content.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,onDragIn);
+	//		img.content.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,onDrop);
+			
 			img.content.x = -(img.content.width >> 1);
 			img.content.y = -(img.content.height >> 1);
 			

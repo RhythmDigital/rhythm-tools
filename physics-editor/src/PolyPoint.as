@@ -15,7 +15,7 @@ package
 		public var tf:TextField;
 		private var col:uint;
 		
-		public function PolyPoint(col:uint = 0x00ff00, group:int = 0)
+		public function PolyPoint(col:uint = 0x00ff00, group:int = -1)
 		{
 			super();
 			this.group = group;
@@ -63,8 +63,8 @@ package
 			graphics.beginFill(col, 0.0);
 			graphics.drawCircle(0,0,10);
 			graphics.beginFill(col, a);
-			graphics.drawCircle(0,0,5);
-			graphics.beginFill(0x000000,1);
+			graphics.drawCircle(0,0,2);
+			graphics.beginFill(0xffffff,1);
 			graphics.drawCircle(0,0,1);
 			graphics.endFill();
 		}
